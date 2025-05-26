@@ -1,52 +1,40 @@
-from fastapi import FastAPI, HTTPException
-import sqlite3
-from typing import List
-from pydantic import BaseModel
+# main.py
+from fastapi import FastAPI
+import logging
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+# Importa funções e routers dos outros módulos
+from database import create_tables, DATABASE_URL # Ajuste se necessário
+from routers import experimentos # Importa o módulo do router
 
-DATABASE = "experimentos.db"
+# Configuração de Logging básica
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# --- MODELOS DE RESPOSTA ---
+# Gerenciador de contexto Lifespan para eventos de inicialização e desligamento
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Código a ser executado antes da aplicação iniciar (substitui startup)
+    logger.info(f"Conectando ao banco de dados: {DATABASE_URL}")
+    create_tables()
+    logger.info("Aplicação iniciando... Tabelas do banco de dados verificadas/criadas.")
+    yield
+    # Código a ser executado após a aplicação desligar (substitui shutdown)
+    logger.info("Aplicação desligando...")
 
-class Experimento(BaseModel):
-    id: int
-    data: str
-    nome: str
+app = FastAPI(
+    title="API de Experimentos Científicos",
+    description="API para gerenciar experimentos e seus dados.",
+    version="1.0.0",
+    lifespan=lifespan # Adiciona o gerenciador de lifespan
+)
 
-class Dado(BaseModel):
-    id: int
-    accel_x: float
-    accel_y: float
-    accel_z: float
-    vel_x: float
-    vel_y: float
-    vel_z: float
-    longitude: float
-    latitude: float
-    altura: float
-    fk_exp: int
+# Inclui o router de experimentos na aplicação principal
+app.include_router(experimentos.router)
 
-# --- ROTAS ---
+@app.get("/", tags=["Root"], summary="Verifica se a API está online")
+async def read_root():
+    return {"status": "API de Experimentos Online!"}
 
-@app.get("/experimentos", response_model=List[Experimento])
-def get_experimentos():
-    con = sqlite3.connect(DATABASE)
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute("SELECT * FROM EXPERIMENTOS")
-    rows = cur.fetchall()
-    con.close()
-    return [dict(row) for row in rows]
-
-@app.get("/dados/{fk_exp}", response_model=List[Dado])
-def get_dados_por_experimento(fk_exp: int):
-    con = sqlite3.connect(DATABASE)
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute("SELECT * FROM DADOS WHERE fk_exp = ?", (fk_exp,))
-    rows = cur.fetchall()
-    con.close()
-    if not rows:
-        raise HTTPException(status_code=404, detail="Nenhum dado encontrado para esse experimento.")
-    return [dict(row) for row in rows]
+# Para executar (no terminal, no diretório raiz do projeto):
+# uvicorn main:app --reload
