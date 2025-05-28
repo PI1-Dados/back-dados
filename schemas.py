@@ -32,12 +32,10 @@ class DadosExperimentoBase(BaseModel):
     accel_x: Optional[float] = None
     accel_y: Optional[float] = None
     accel_z: Optional[float] = None
-    vel_x: Optional[float] = None
-    vel_y: Optional[float] = None
-    vel_z: Optional[float] = None
+    speed_kmph: Optional[float] = None
     longitude: Optional[float] = None
     latitude: Optional[float] = None
-    altura: Optional[float] = None
+    height: Optional[float] = None
     fk_exp: int
 
 class DadosExperimentoCreate(DadosExperimentoBase):
@@ -53,7 +51,7 @@ class DadosCSV(BaseModel):
     longitude: Optional[float] = None
     altitude: Optional[float] = None
     # Outros campos do CSV podem ser adicionados aqui se necessário para validação
-    # timestamp: Optional[str] = None
+    timestamp: Optional[str] = None
+    speed_kmph: Optional[float] = None
     # satellites: Optional[int] = None
     # hdop: Optional[float] = None
-    # speed_kmph: Optional[float] = None

@@ -33,8 +33,10 @@ def create_experimento_db(db: sqlite3.Connection, experimento: schemas.Experimen
         ))
         db.commit()
         experimento_id = cursor.lastrowid
+        
         logger.info(f"Experimento '{experimento.nomeExperimento}' inserido com ID: {experimento_id}")
         return experimento_id
+    
     except sqlite3.Error as e:
         db.rollback()
         logger.error(f"Erro ao inserir experimento no DB: {e}")
@@ -49,8 +51,8 @@ def create_dados_experimento_lote_db(db: sqlite3.Connection, dados_lote: List[Tu
         return 0
     
     sql = """
-        INSERT INTO DADOS (accel_x, accel_y, accel_z, vel_x, vel_y, vel_z, longitude, latitude, altura, fk_exp)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO DADOS (timestamp, accel_x, accel_y, accel_z, speed_kmph, longitude, latitude, altura, fk_exp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     cursor = db.cursor()
     try:
@@ -86,22 +88,21 @@ def processar_e_salvar_csv(db: sqlite3.Connection, arquivo_csv_bytes: bytes, exp
                 schemas.DadosCSV(
                     latitude=row_data.get('latitude'),
                     longitude=row_data.get('longitude'),
-                    altitude=row_data.get('altitude')
+                    altitude=row_data.get('altitude'),
+                    speed_kmph=row_data.get('speed_kmph'),
+                    timestamp=row_data.get('timestamp')
                 )
             except Exception as e_val:
                 logger.warning(f"Linha {index} do CSV com dados inválidos: {row_data}. Erro: {e_val}")
                 continue
 
-            latitude_csv = row_data.get('latitude')
-            longitude_csv = row_data.get('longitude')
-            altura_csv = row_data.get('altitude')
-
             dados_linha_tupla = (
+                row_data.get('timestamp'),
                 row_data.get('accel_x'), row_data.get('accel_y'), row_data.get('accel_z'),
-                None, None, None,
-                longitude_csv,
-                latitude_csv,
-                altura_csv,
+                row_data.get('speed_kmph'),
+                row_data.get('latitude'),
+                row_data.get('longitude'),
+                row_data.get('altitude'),
                 experimento_id
             )
             dados_para_inserir_db.append(dados_linha_tupla)

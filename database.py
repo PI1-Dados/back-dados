@@ -55,12 +55,11 @@ def create_tables():
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS DADOS (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME,
             accel_x REAL,
             accel_y REAL,
             accel_z REAL,
-            vel_x REAL,
-            vel_y REAL,
-            vel_z REAL,
+            speed_kmph REAL,
             longitude REAL,
             latitude REAL,
             altura REAL,
