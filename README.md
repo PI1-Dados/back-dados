@@ -11,4 +11,6 @@ Repositório do backend do software da matéria de PI1 2025/1
 
 3. Instale as dependências utilizadas pelo projeto pelo comando `pip install -r requirements.txt`
 
-4. Inicie a aplicação levantando um servidor local pelo uvicorn com o comando `uvicorn main:app --reload`
+4. Duplique o arquivo '.env_exemplo' e o nomeie '.env' (defina o valor da variável para 'db/experimentos.db' apenas para registro de experimentos oficiais)
+
+5. Inicie a aplicação levantando um servidor local pelo uvicorn com o comando `uvicorn main:app --reload`

@@ -8,8 +8,8 @@ class ExperimentoBase(BaseModel):
     distanciaAlvo: int
     dataExperimento: str  # Formato dd/mm/yyyy
     pressaoAgua: float
-    qtdLitrosAgua: float
-    pesoFoguete: float
+    volumeAgua: float
+    massaTotalFoguete: float
 
     @field_validator('dataExperimento')
     @classmethod

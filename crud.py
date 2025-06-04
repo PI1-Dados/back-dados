@@ -18,7 +18,7 @@ def create_experimento_db(db: sqlite3.Connection, experimento: schemas.Experimen
     Retorna o ID do experimento inserido.
     """
     sql = """
-        INSERT INTO EXPERIMENTO (nome, distancia_alvo, data, pressao_agua, qtd_litros_agua, peso_foguete)
+        INSERT INTO EXPERIMENTO (nome, distancia_alvo, data, pressao_psi, volume_agua, massa_total_foguete)
         VALUES (?, ?, ?, ?, ?, ?)
     """
     cursor = db.cursor()
@@ -28,8 +28,8 @@ def create_experimento_db(db: sqlite3.Connection, experimento: schemas.Experimen
             experimento.distanciaAlvo,
             data_obj.isoformat(), # Armazena data como YYYY-MM-DD
             experimento.pressaoAgua,
-            experimento.qtdLitrosAgua,
-            experimento.pesoFoguete
+            experimento.volumeAgua,
+            experimento.massaTotalFoguete
         ))
         db.commit()
         experimento_id = cursor.lastrowid

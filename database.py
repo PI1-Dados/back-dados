@@ -11,23 +11,15 @@ DATABASE_URL = os.getenv('DATABASE_SQLITE')
 def get_db_connection():
     """Cria e retorna uma conexão com o banco de dados."""
     if DATABASE_URL:
-        # Dentro deste bloco, o verificador de tipos sabe que DATABASE_URL é uma str,
-        # porque a condição DATABASE_URL (que avalia para True se não for None ou string vazia) passou.
         logger.info(f"Conectando ao banco de dados: {DATABASE_URL}")
-        conn = sqlite3.connect(DATABASE_URL) # ✅ Seguro para chamar aqui
-        # ... seu código para usar a conexão ...
-        # conn.close() # Lembre-se de fechar a conexão
+        conn = sqlite3.connect(DATABASE_URL) 
+
+        # conn.close()
     else:
         logger.error("A variável de ambiente DATABASE_SQLITE não foi definida.")
-        # É uma boa prática tratar esse caso explicitamente:
-        # Opção 1: Levantar um erro e parar a execução
+
         raise ValueError("Configuração crítica ausente: DATABASE_SQLITE não foi definida no ambiente ou arquivo .env.")
-        # Opção 2: Usar um valor padrão (se fizer sentido para sua aplicação)
-        # logger.warning("DATABASE_SQLITE não definida, usando banco de dados em memória ou padrão.")
-        # conn = sqlite3.connect(':memory:') # Exemplo de fallback
-        # Opção 3: Sair da aplicação
-        # import sys
-        # sys.exit("Erro: DATABASE_SQLITE não configurada.")
+
     
     conn.row_factory = sqlite3.Row  # Permite acessar colunas por nome
     return conn
@@ -44,9 +36,9 @@ def create_tables():
             nome VARCHAR(80) NOT NULL,
             distancia_alvo INT NOT NULL,
             data DATE NOT NULL,
-            pressao_agua FLOAT NOT NULL,
-            qtd_litros_agua FLOAT NOT NULL,
-            peso_foguete FLOAT NOT NULL
+            pressao_psi FLOAT NOT NULL,
+            volume_agua FLOAT NOT NULL,
+            massa_total_foguete FLOAT NOT NULL
         )
         """)
         logger.info("Tabela EXPERIMENTO verificada/criada.")
