@@ -43,9 +43,9 @@ def create_tables():
         """)
         logger.info("Tabela EXPERIMENTO verificada/criada.")
 
-        # Tabela DADOS
+        # Tabela DADOS_EXPERIMENTO
         cursor.execute("""
-        CREATE TABLE IF NOT EXISTS DADOS (
+        CREATE TABLE IF NOT EXISTS DADOS_EXPERIMENTO (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME,
             accel_x REAL,
@@ -59,7 +59,7 @@ def create_tables():
             FOREIGN KEY (fk_exp) REFERENCES EXPERIMENTO(id) ON DELETE CASCADE
         )
         """)
-        logger.info("Tabela DADOS verificada/criada.")
+        logger.info("Tabela DADOS_EXPERIMENTO verificada/criada.")
         conn.commit()
     except sqlite3.Error as e:
         logger.error(f"Erro ao criar tabelas: {e}")

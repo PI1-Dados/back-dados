@@ -39,6 +39,18 @@ DbDependency = Annotated[sqlite3.Connection, Depends(get_db)]
 async def mostra_grafico(id_experimento):
     plot_distancia_acumulada_vs_tempo(id_experimento)
 
+@router.get("/{id_experimento}")
+async def busca_experimento(db:DbDependency, id_experimento):
+    exp = await run_in_threadpool(crud.select_experimento_completo, db, id_experimento)
+    
+    return exp
+
+@router.get("")
+async def busca_todos_experimentos(db:DbDependency):
+    exp = await run_in_threadpool(crud.select_todos_experimentos, db)
+    
+    return exp
+
 @router.post("/novo", summary="Cria um novo experimento com dados de um CSV")
 async def criar_novo_experimento_rota(
     db: DbDependency,

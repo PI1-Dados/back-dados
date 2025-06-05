@@ -27,7 +27,7 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     distance = R * c
-    return distance * 1000
+    return distance
 
 def get_dados_experimento(experimento_id: int):
     """
@@ -40,7 +40,7 @@ def get_dados_experimento(experimento_id: int):
     
     cursor.execute("""
         SELECT timestamp, latitude, longitude, speed_kmph
-        FROM DADOS 
+        FROM DADOS_EXPERIMENTO 
         WHERE fk_exp = ? AND latitude IS NOT NULL AND longitude IS NOT NULL AND timestamp IS NOT NULL
         ORDER BY timestamp ASC 
     """, (experimento_id,))

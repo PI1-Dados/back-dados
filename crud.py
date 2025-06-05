@@ -1,6 +1,6 @@
 # crud.py
 import sqlite3
-from typing import List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import date
 import pandas as pd
 import io
@@ -8,7 +8,8 @@ import logging
 
 # Imports corrigidos para absolutos
 import schemas # Assume que schemas.py está no mesmo nível ou PYTHONPATH
-from database import get_db_connection # Assume que database.py está no mesmo nível ou PYTHONPATH
+from database import get_db_connection
+from teste import haversine # Assume que database.py está no mesmo nível ou PYTHONPATH
 
 logger = logging.getLogger(__name__)
 
@@ -51,21 +52,136 @@ def create_dados_experimento_lote_db(db: sqlite3.Connection, dados_lote: List[Tu
         return 0
     
     sql = """
-        INSERT INTO DADOS (timestamp, accel_x, accel_y, accel_z, speed_kmph, longitude, latitude, altura, fk_exp)
+        INSERT INTO DADOS_EXPERIMENTO (timestamp, accel_x, accel_y, accel_z, speed_kmph, longitude, latitude, altura, fk_exp)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     cursor = db.cursor()
     try:
         cursor.executemany(sql, dados_lote)
         db.commit()
-        logger.info(f"{cursor.rowcount} registros inseridos na tabela DADOS.")
+        logger.info(f"{cursor.rowcount} registros inseridos na tabela DADOS_EXPERIMENTO.")
         return cursor.rowcount
     except sqlite3.Error as e:
         db.rollback()
         logger.error(f"Erro ao inserir dados do experimento em lote no DB: {e}")
         raise e # Re-levanta a exceção
 
-# Alterado de async def para def
+def select_todos_experimentos(db: sqlite3.Connection) -> Optional[Dict[str, Any]]:
+    """
+    Retorna todos os experimentos, as apenas seus metadados.
+    """
+    
+    sql = """
+        SELECT * FROM EXPERIMENTO
+    """
+    
+    cursor = db.cursor()
+    
+    cursor.execute(sql)
+    dados_rows = cursor.fetchall() # Pega todas as linhas correspondentes
+    
+    lista_experimentos = [dict(row) for row in dados_rows]
+    
+    return {
+                "experimentos": lista_experimentos,
+            }
+
+
+def select_experimento_completo(db: sqlite3.Connection, id_experimento: int) -> Optional[Dict[str, Any]]:
+    """
+    Seleciona os detalhes de um experimento e todos os seus registros de dados associados.
+
+    Args:
+        db: Conexão com o banco de dados SQLite.
+        id_experimento: O ID do experimento a ser buscado.
+
+    Returns:
+        Um dicionário contendo os detalhes do experimento e uma lista de seus dados,
+        ou None se o experimento não for encontrado.
+    """
+
+    experimento_data = None
+    dados_registros = []
+
+    sql_experimento = """
+        SELECT * FROM EXPERIMENTO
+        WHERE id = ?
+    """
+    
+    # Corrigido nome da tabela para DADOS e coluna para fk_exp
+    sql_dados_experimento = """
+        SELECT timestamp, accel_x, accel_y, accel_z, speed_kmph, longitude, latitude, altura FROM DADOS_EXPERIMENTO
+        WHERE fk_exp = ?
+        ORDER BY timestamp ASC
+    """
+    
+    cursor = db.cursor()
+    
+    try:
+        # Buscar os detalhes do experimento
+        cursor.execute(sql_experimento, (id_experimento,))
+        experimento_row = cursor.fetchone() # Pega uma única linha
+
+        if experimento_row:
+            if hasattr(experimento_row, 'keys'): 
+                 experimento_data = dict(experimento_row)
+            else:
+                experimento_data = {"raw_experimento": list(experimento_row)} # Retorno genérico se não for Row
+                logger.warning("sqlite3.Row não está ativo na conexão. Detalhes do experimento retornados como lista.")
+
+
+            # Buscar os registros de dados associados ao experimento
+            cursor.execute(sql_dados_experimento, (id_experimento,))
+            dados_rows = cursor.fetchall() # Pega todas as linhas correspondentes
+
+            if hasattr(dados_rows[0] if dados_rows else None, 'keys'):
+                dados_registros = []
+                distancia_acumulada = 0.0
+                
+                for i in range(0, len(dados_rows)):
+                    dict_dados = dict(dados_rows[i])
+                    
+                    if i == 0:
+                        dict_dados['distancia'] = distancia_acumulada
+                    else:
+                        dict_ant = dict(dados_rows[i-1])
+                        
+                        distancia_calculada = haversine(dict_ant['latitude'],
+                                                        dict_ant['longitude'],
+                                                        dict_dados['latitude'],
+                                                        dict_dados['longitude'],
+                                                        )
+                        
+                        distancia_acumulada += distancia_calculada
+                        
+                        dict_dados['distancia'] = distancia_acumulada
+                    
+                    dados_registros.append(dict_dados)
+                
+            else:
+                dados_registros = [list(row) for row in dados_rows ]
+                if dados_rows:
+                    logger.warning("sqlite3.Row não está ativo na conexão. Registros de dados retornados como listas.")
+
+            logger.info(f"Experimento ID {id_experimento} encontrado com {len(dados_registros)} registros de dados.")
+            
+            # Monta o resultado final
+            resultado_completo = {
+                "experimento": experimento_data,
+                "dados_associados": dados_registros
+            }
+            
+            return resultado_completo
+        else:
+            logger.info(f"Experimento com ID {id_experimento} não encontrado.")
+            return None
+
+    except sqlite3.Error as e:
+        # Não há db.rollback() ou db.commit() para operações SELECT
+        logger.error(f"Erro ao selecionar dados para o experimento ID {id_experimento}: {e}")
+        raise e # Re-levanta a exceção para ser tratada pelo chamador
+
+
 def processar_e_salvar_csv(db: sqlite3.Connection, arquivo_csv_bytes: bytes, experimento_id: int) -> int:
     """
     Lê o conteúdo de um arquivo CSV (em bytes), processa os dados e os salva no banco.
