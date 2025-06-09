@@ -4,6 +4,7 @@ import logging
 from contextlib import asynccontextmanager
 from database import create_tables, DATABASE_URL
 from routers import experimentos
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configuração de Logging básica
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +25,17 @@ app = FastAPI(
     description="API para gerenciar experimentos e seus dados.",
     version="1.0.0",
     lifespan=lifespan
+)
+
+# CORS
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(experimentos.router)
