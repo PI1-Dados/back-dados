@@ -35,19 +35,15 @@ def get_db():
 
 DbDependency = Annotated[sqlite3.Connection, Depends(get_db)]
 
-@router.get("/gerar-grafico/{id_experimento}")
-async def mostra_grafico(id_experimento):
-    plot_distancia_acumulada_vs_tempo(id_experimento)
+@router.get("")
+async def busca_todos_experimentos(db:DbDependency):
+    exp = await run_in_threadpool(crud.select_todos_experimentos, db)
+    
+    return exp
 
 @router.get("/{id_experimento}")
 async def busca_experimento(db:DbDependency, id_experimento):
     exp = await run_in_threadpool(crud.select_experimento_completo, db, id_experimento)
-    
-    return exp
-
-@router.get("")
-async def busca_todos_experimentos(db:DbDependency):
-    exp = await run_in_threadpool(crud.select_todos_experimentos, db)
     
     return exp
 
@@ -129,3 +125,61 @@ async def criar_novo_experimento_rota(
         "nome_arquivo_csv": arquivoDados.filename,
         "registros_csv_processados": registros_csv_salvos
     }
+
+
+# Tá retornando 200 mas tá retornando com erro (???)
+@router.put("/{id_experimento}", summary="Atualiza (substitui) um experimento")
+async def atualizar_experimento_completo_rota(
+    id_experimento: int,
+    dados_experimento: schemas.ExperimentoCreate, # Usa o schema que já tem o validador
+    db: DbDependency
+):
+    # 1. Verifica se o experimento a ser atualizado existe
+    experimento_existente = await run_in_threadpool(crud.select_experimento_completo, db, id_experimento)
+    if not experimento_existente:
+        raise HTTPException(status_code=404, detail=f"Experimento com id {id_experimento} não encontrado.")
+
+    # Bloco principal try/except para erros de banco de dados ou inesperados
+    try:
+        # 2. Converte a data (sem precisar de um try/except próprio)
+        data_obj = datetime.strptime(dados_experimento.dataExperimento, "%d/%m/%Y").date()
+
+        # 3. Prepara a tupla de dados para a função CRUD
+        dados_para_db = [
+            dados_experimento.nomeExperimento,
+            dados_experimento.distanciaAlvo,
+            data_obj,  # Usa o objeto de data já convertido
+            dados_experimento.pressaoAgua,
+            dados_experimento.volumeAgua,
+            dados_experimento.massaTotalFoguete,
+        ]
+
+        # 4. Chama a função CRUD
+        await run_in_threadpool(crud.update_experimento, db, id_experimento, dados_para_db)
+
+    except sqlite3.Error as e_db:
+        logger.error(f"Erro de banco de dados na rota PUT: {e_db}")
+        print("\nCOCO\n")
+        raise HTTPException(status_code=500, detail=f"Erro de banco de dados: {str(e_db)}")
+    except Exception as e_geral:
+        logger.error(f"Erro geral inesperado na rota PUT: {e_geral}")
+        raise HTTPException(status_code=500, detail=f"Erro inesperado no servidor: {str(e_geral)}")
+
+    # 5. Retorna a resposta de sucesso com os dados atualizados
+    experimento_atualizado = await run_in_threadpool(crud.select_experimento_completo, db, id_experimento)
+
+    return {
+        "mensagem": "Experimento atualizado com sucesso!",
+        "experimento": experimento_atualizado["experimento"]
+    }
+
+@router.delete("/{id_experimento}")
+async def deleta_experimento(db:DbDependency, id_experimento):
+    exp = await run_in_threadpool(crud.delete_experimento, db, id_experimento)
+    
+    return exp
+
+
+@router.get("/gerar-grafico/{id_experimento}")
+async def mostra_grafico(id_experimento):
+    plot_distancia_acumulada_vs_tempo(id_experimento)

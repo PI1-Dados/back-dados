@@ -1,6 +1,6 @@
 .venv
 .env
-gps_data_demo.csv
+csvs_teste/*
 */__pycache__
 __pycache__
 db/experimentos_teste.db

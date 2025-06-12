@@ -86,7 +86,6 @@ def select_todos_experimentos(db: sqlite3.Connection) -> Optional[Dict[str, Any]
                 "experimentos": lista_experimentos,
             }
 
-
 def select_experimento_completo(db: sqlite3.Connection, id_experimento: int) -> Optional[Dict[str, Any]]:
     """
     Seleciona os detalhes de um experimento e todos os seus registros de dados associados.
@@ -181,7 +180,6 @@ def select_experimento_completo(db: sqlite3.Connection, id_experimento: int) -> 
         logger.error(f"Erro ao selecionar dados para o experimento ID {id_experimento}: {e}")
         raise e # Re-levanta a exceção para ser tratada pelo chamador
 
-
 def processar_e_salvar_csv(db: sqlite3.Connection, arquivo_csv_bytes: bytes, experimento_id: int) -> int:
     """
     Lê o conteúdo de um arquivo CSV (em bytes), processa os dados e os salva no banco.
@@ -236,3 +234,65 @@ def processar_e_salvar_csv(db: sqlite3.Connection, arquivo_csv_bytes: bytes, exp
         logger.error(f"Erro ao processar o arquivo CSV: {e_csv}")
         raise ValueError(f"Erro ao processar o arquivo CSV: {str(e_csv)}")
 
+def update_experimento(db: sqlite3.Connection, id_experimento:int, dados_lote: List[Tuple]) -> int:
+    """
+    Edita os metadados de um experimento no banco de dados.
+    Retorna 1 no êxito ou 0 na falha.
+    """ 
+
+    sql_experimento = """
+        UPDATE EXPERIMENTO SET 
+        nome = ?, distancia_alvo = ?, data = ?,
+        pressao_psi = ?, volume_agua = ?, massa_total_foguete = ?
+        WHERE id = ?
+    """
+    
+    if not dados_lote:
+        return 0
+    
+    parametros_finais = dados_lote + [id_experimento]
+    
+    cursor = db.cursor()
+    
+    try:
+        # Buscar os detalhes do experimento
+        cursor.execute(sql_experimento, parametros_finais)
+
+        print(parametros_finais)
+        db.commit()
+
+        logger.info(f"{cursor.rowcount} registro(s) atualizado(s) na tabela EXPERIMENTO para o id {parametros_finais[-1]}.")
+        return cursor.rowcount
+    
+    except sqlite3.Error as e:
+        db.rollback()
+        logger.error(f"Erro ao atualizar dados do experimento {parametros_finais[-1]} no DB: {e}")
+        raise e # Re-levanta a exceção
+
+def delete_experimento(db: sqlite3.Connection, id_experimento: int):
+    """
+    Deleta um registro da tabela EXPERIMENTO com base no ID fornecido.
+    """
+    sql = "DELETE FROM EXPERIMENTO WHERE id = ?"
+    
+    cursor = db.cursor()
+    
+    try:
+        # Executa o comando DELETE, passando o ID como parâmetro em uma tupla
+        cursor.execute(sql, (id_experimento,))
+        db.commit()
+        
+        # cursor.rowcount informará se alguma linha foi de fato deletada (1) ou não (0)
+        if cursor.rowcount > 0:
+            logger.info(f"Registro com id {id_experimento} deletado com sucesso da tabela EXPERIMENTO.")
+        else:
+            logger.warning(f"Nenhum registro encontrado com o id {id_experimento}. Nenhuma linha foi deletada.")
+            
+        return cursor.rowcount
+        
+    except sqlite3.Error as e:
+        db.rollback()
+        logger.error(f"Erro ao deletar o experimento id {id_experimento} no DB: {e}")
+        raise e
+    finally:
+        cursor.close()
