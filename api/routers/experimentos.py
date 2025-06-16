@@ -1,4 +1,3 @@
-# routers/experimentos.py
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Depends
 from fastapi.concurrency import run_in_threadpool # Importado para rodar código síncrono em thread separada
 from typing import Annotated
@@ -6,18 +5,10 @@ from datetime import datetime
 from api.utils.teste import plot_distancia_acumulada_vs_tempo
 import sqlite3
 import logging
-import sys
-import os
-
-# Adiciona o diretório pai ao sys.path para permitir imports diretos
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
-if parent_dir not in sys.path:
-    sys.path.append(parent_dir)
-
 import api.utils.crud as crud
 import api.schemas.schemas as schemas
 from api.core.database import get_db_connection
+
 
 logger = logging.getLogger(__name__)
 

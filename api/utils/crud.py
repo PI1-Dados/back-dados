@@ -1,15 +1,12 @@
-# crud.py
 import sqlite3
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import date
 import pandas as pd
 import io
 import logging
+import api.schemas.schemas as schemas
+from api.utils.teste import haversine
 
-# Imports corrigidos para absolutos
-import api.schemas.schemas as schemas # Assume que schemas.py está no mesmo nível ou PYTHONPATH
-from api.core.database import get_db_connection
-from api.utils.teste import haversine # Assume que database.py está no mesmo nível ou PYTHONPATH
 
 logger = logging.getLogger(__name__)
 

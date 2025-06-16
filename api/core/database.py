@@ -1,4 +1,3 @@
-# database.py
 import sqlite3
 import logging, os
 from dotenv import load_dotenv
