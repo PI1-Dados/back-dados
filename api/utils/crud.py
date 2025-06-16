@@ -7,9 +7,9 @@ import io
 import logging
 
 # Imports corrigidos para absolutos
-import schemas # Assume que schemas.py está no mesmo nível ou PYTHONPATH
-from database import get_db_connection
-from teste import haversine # Assume que database.py está no mesmo nível ou PYTHONPATH
+import api.schemas.schemas as schemas # Assume que schemas.py está no mesmo nível ou PYTHONPATH
+from api.core.database import get_db_connection
+from api.utils.teste import haversine # Assume que database.py está no mesmo nível ou PYTHONPATH
 
 logger = logging.getLogger(__name__)
 

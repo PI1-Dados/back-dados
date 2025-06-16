@@ -3,7 +3,7 @@ import math, os
 from datetime import datetime, timezone
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from database import DATABASE_URL
+from api.core.database import DATABASE_URL
 import dotenv
 
 dotenv.load_dotenv()

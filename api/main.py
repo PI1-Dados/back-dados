@@ -2,8 +2,8 @@
 from fastapi import FastAPI
 import logging
 from contextlib import asynccontextmanager
-from database import create_tables, DATABASE_URL
-from routers import experimentos
+from api.core.database import create_tables, DATABASE_URL
+from api.routers import experimentos
 from fastapi.middleware.cors import CORSMiddleware
 
 # Configuração de Logging básica

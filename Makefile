@@ -30,7 +30,7 @@ endif
 # Alvo principal
 run: check-env install setup
 	@echo "\n🚀 Iniciando servidor..."
-	$(UVICORN) main:app --reload
+	$(UVICORN) api.main:app --reload
 
 # Verifica Python
 check-env:

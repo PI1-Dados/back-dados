@@ -3,7 +3,7 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Depends
 from fastapi.concurrency import run_in_threadpool # Importado para rodar código síncrono em thread separada
 from typing import Annotated
 from datetime import datetime
-from teste import plot_distancia_acumulada_vs_tempo
+from api.utils.teste import plot_distancia_acumulada_vs_tempo
 import sqlite3
 import logging
 import sys
@@ -15,9 +15,9 @@ parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
-import crud
-import schemas
-from database import get_db_connection
+import api.utils.crud as crud
+import api.schemas.schemas as schemas
+from api.core.database import get_db_connection
 
 logger = logging.getLogger(__name__)
 
