@@ -1,16 +1,27 @@
-# back-dados
-Repositório do backend do software da matéria de PI1 2025/1
+# 🚀 Backend - Sistema de Experimentos de Foguetes
 
-# Como executar a aplicação (Linux)
+Repositório do backend da disciplina de PI1 (2025/1)
 
-0. Certifique-se de ter o python 3.10.X instalado
+## 📋 Pré-requisitos
+- **Python 3.10** ou superior
+- **Make** (GNU Make)
 
-1. Crie um ambiente virtual Python através do comando `python3 -m venv .venv`
+## ⚡ Como Executar a Aplicação
 
-2. Entre no ambiente recém-criado pelo comando `source .venv/bin/activate`
+Certifique-se que está no diretório do projeto e execute o seguinte comando:
+```bash
+make run
+```
+> Instala dependências, configura ambiente e inicia o servidor
 
-3. Instale as dependências utilizadas pelo projeto pelo comando `pip install -r requirements.txt`
+### Outros comandos úteis
 
-4. Duplique o arquivo '.env_exemplo' e o nomeie '.env' (defina o valor da variável para 'db/experimentos.db' apenas para registro de experimentos oficiais)
+| Comando    | Função                                                                 |
+|------------|------------------------------------------------------------------------|
+| `make install`  | Cria venv e instala dependências                                       |
+| `make setup`    | Configura ambiente (.env + estrutura)                                  |
+| `make clean`    | Remove arquivos temporários                                            |
 
-5. Inicie a aplicação levantando um servidor local pelo uvicorn com o comando `uvicorn main:app --reload`
+## Acessando a API
+
+Após a inicialização do servidor é disponibilizada uma URL local no terminal que possibilita o acesso a API
