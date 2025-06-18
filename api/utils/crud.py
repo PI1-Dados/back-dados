@@ -25,7 +25,7 @@ def create_experimento_db(db: sqlite3.Connection, experimento: schemas.Experimen
             experimento.nomeExperimento,
             experimento.distanciaAlvo,
             data_obj.isoformat(), # Armazena data como YYYY-MM-DD
-            experimento.pressaoAgua,
+            experimento.pressaoBar,
             experimento.volumeAgua,
             experimento.massaTotalFoguete
         ))

@@ -44,9 +44,9 @@ async def criar_novo_experimento_rota(
     nomeExperimento: str = Form(..., description="Nome do experimento"),
     distanciaAlvo: int = Form(..., description="Distância alvo em metros"),
     dataExperimento: str = Form(..., description="Data do experimento no formato dd/mm/yyyy"),
-    pressaoAgua: float = Form(..., description="Pressão da água em PSI ou bar"),
-    volumeAgua: float = Form(..., description="Quantidade de litros de água"),
-    massaTotalFoguete: float = Form(..., description="Peso do foguete em kg"),
+    pressaoBar: float = Form(..., description="Pressão da água em BAR"),
+    volumeAgua: float = Form(..., description="Quantidade de ml de água"),
+    massaTotalFoguete: float = Form(..., description="Peso do foguete em gramas"),
     arquivoDados: UploadFile = File(..., description="Arquivo CSV com os dados do lançamento/experimento")
 ):
 
@@ -70,7 +70,7 @@ async def criar_novo_experimento_rota(
         nomeExperimento=nomeExperimento,
         distanciaAlvo=distanciaAlvo,
         dataExperimento=dataExperimento,
-        pressaoAgua=pressaoAgua,
+        pressaoBar=pressaoBar,
         volumeAgua=volumeAgua,
         massaTotalFoguete=massaTotalFoguete
     )
@@ -122,8 +122,13 @@ async def criar_novo_experimento_rota(
 @router.put("/{id_experimento}", summary="Atualiza (substitui) um experimento")
 async def atualizar_experimento_completo_rota(
     id_experimento: int,
-    dados_experimento: schemas.ExperimentoCreate, # Usa o schema que já tem o validador
-    db: DbDependency
+    db: DbDependency,
+    nomeExperimento: str = Form(..., description="Nome do experimento"),
+    distanciaAlvo: int = Form(..., description="Distância alvo em metros"),
+    dataExperimento: str = Form(..., description="Data do experimento no formato dd/mm/yyyy"),
+    pressaoBar: float = Form(..., description="Pressão da água em BAR"),
+    volumeAgua: float = Form(..., description="Quantidade de ml de água"),
+    massaTotalFoguete: float = Form(..., description="Peso do foguete em gramas")
 ):
     # 1. Verifica se o experimento a ser atualizado existe
     experimento_existente = await run_in_threadpool(crud.select_experimento_completo, db, id_experimento)
@@ -132,25 +137,40 @@ async def atualizar_experimento_completo_rota(
 
     # Bloco principal try/except para erros de banco de dados ou inesperados
     try:
-        # 2. Converte a data (sem precisar de um try/except próprio)
-        data_obj = datetime.strptime(dados_experimento.dataExperimento, "%d/%m/%Y").date()
+        # 2. Converte a data
+        try:
+            data_obj = datetime.strptime(dataExperimento, "%d/%m/%Y").date()
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Formato de data inválido para 'dataExperimento'. Use dd/mm/yyyy."
+            )
 
         # 3. Prepara a tupla de dados para a função CRUD
+        # Aqui, criamos um schema Pydantic para manter a consistência, embora os dados venham do Form
+        dados_experimento_schema = schemas.ExperimentoCreate(
+            nomeExperimento=nomeExperimento,
+            distanciaAlvo=distanciaAlvo,
+            dataExperimento=dataExperimento, # Mantém como string para o schema
+            pressaoBar=pressaoBar,
+            volumeAgua=volumeAgua,
+            massaTotalFoguete=massaTotalFoguete
+        )
+
         dados_para_db = [
-            dados_experimento.nomeExperimento,
-            dados_experimento.distanciaAlvo,
+            dados_experimento_schema.nomeExperimento,
+            dados_experimento_schema.distanciaAlvo,
             data_obj,  # Usa o objeto de data já convertido
-            dados_experimento.pressaoAgua,
-            dados_experimento.volumeAgua,
-            dados_experimento.massaTotalFoguete,
+            dados_experimento_schema.pressaoBar,
+            dados_experimento_schema.volumeAgua,
+            dados_experimento_schema.massaTotalFoguete,
         ]
 
-        # 4. Chama a função CRUD
+        # 4. Chama a função CRUD para atualizar o experimento
         await run_in_threadpool(crud.update_experimento, db, id_experimento, dados_para_db)
 
     except sqlite3.Error as e_db:
         logger.error(f"Erro de banco de dados na rota PUT: {e_db}")
-        print("\nCOCO\n")
         raise HTTPException(status_code=500, detail=f"Erro de banco de dados: {str(e_db)}")
     except Exception as e_geral:
         logger.error(f"Erro geral inesperado na rota PUT: {e_geral}")
@@ -163,7 +183,6 @@ async def atualizar_experimento_completo_rota(
         "mensagem": "Experimento atualizado com sucesso!",
         "experimento": experimento_atualizado["experimento"]
     }
-
 @router.delete("/{id_experimento}")
 async def deleta_experimento(db:DbDependency, id_experimento):
     exp = await run_in_threadpool(crud.delete_experimento, db, id_experimento)

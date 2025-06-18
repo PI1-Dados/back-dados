@@ -6,7 +6,7 @@ class ExperimentoBase(BaseModel):
     nomeExperimento: str
     distanciaAlvo: int
     dataExperimento: str  # Formato dd/mm/yyyy
-    pressaoAgua: float
+    pressaoBar: float
     volumeAgua: float
     massaTotalFoguete: float
 
