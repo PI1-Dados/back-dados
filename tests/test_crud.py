@@ -90,3 +90,58 @@ def test_create_experimento_db_falha_sqlite(mock_db_connection, experimento_data
 
     # Verifica se o commit NÃO foi chamado
     mock_conn.commit.assert_not_called()
+
+def test_select_todos_experimentos(mock_db_connection):
+    """
+    Testa se a função select_todos_experimentos retorna uma lista de experimentos.
+    """
+    mock_conn, mock_cursor = mock_db_connection
+    # Simula o retorno do banco de dados
+    mock_cursor.fetchall.return_value = [
+        {'id': 1, 'nome': 'Experimento 1'},
+        {'id': 2, 'nome': 'Experimento 2'}
+    ]
+
+    # Chama a função
+    resultado = crud.select_todos_experimentos(mock_conn)
+
+    # Verifica se a consulta SQL foi executada
+    mock_cursor.execute.assert_called_once_with("\n        SELECT * FROM EXPERIMENTO\n    ")
+    # Verifica o resultado
+    assert "experimentos" in resultado
+    assert len(resultado["experimentos"]) == 2
+    assert resultado["experimentos"][0]['nome'] == 'Experimento 1'
+
+def test_delete_experimento_sucesso(mock_db_connection):
+    """
+    Testa a deleção de um experimento com sucesso.
+    """
+    mock_conn, mock_cursor = mock_db_connection
+    # Simula que uma linha foi afetada (deletada)
+    mock_cursor.rowcount = 1
+    id_experimento = 1
+
+    # Chama a função
+    resultado = crud.delete_experimento(mock_conn, id_experimento)
+
+    # Verifica se o comando SQL foi chamado com o ID correto
+    mock_cursor.execute.assert_called_once_with("DELETE FROM EXPERIMENTO WHERE id = ?", (id_experimento,))
+    # Verifica se o commit foi chamado
+    mock_conn.commit.assert_called_once()
+    # Verifica se o resultado é o esperado
+    assert resultado == 1
+
+def test_delete_experimento_nao_encontrado(mock_db_connection):
+    """
+    Testa a deleção de um experimento que não existe.
+    """
+    mock_conn, mock_cursor = mock_db_connection
+    # Simula que nenhuma linha foi afetada
+    mock_cursor.rowcount = 0
+    id_experimento = 999
+
+    # Chama a função
+    resultado = crud.delete_experimento(mock_conn, id_experimento)
+
+    # Verifica o resultado
+    assert resultado is None
