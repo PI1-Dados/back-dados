@@ -145,3 +145,25 @@ def test_delete_experimento_nao_encontrado(mock_db_connection):
 
     # Verifica o resultado
     assert resultado is None
+
+def test_update_experimento_sucesso(mock_db_connection):
+    """
+    Testa a atualização de um experimento com sucesso.
+    """
+    mock_conn, mock_cursor = mock_db_connection
+    mock_cursor.rowcount = 1
+    id_experimento = 1
+    dados_para_atualizar = [
+        "Experimento Atualizado",
+        150,
+        date(2025, 10, 20),
+        6.0,
+        600,
+        300.0
+    ]
+
+    resultado = crud.update_experimento(mock_conn, id_experimento, dados_para_atualizar)
+
+    mock_cursor.execute.assert_called_once()
+    mock_conn.commit.assert_called_once()
+    assert resultado == 1
