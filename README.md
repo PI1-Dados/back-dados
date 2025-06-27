@@ -6,9 +6,14 @@ Repositório do backend da disciplina de PI1 (2025/1)
 - **Python 3.10** ou superior
 - **Make** (GNU Make)
 
-## ⚡ Como Executar a Aplicação
+## ⚡ Como Executar a Aplicação 
 
-Certifique-se que está no diretório do projeto e execute o seguinte comando:
+1. Caso ainda não haja um ambiente virtual Python, criar um através do comando:
+```bash
+python3 -m venv .venv
+```
+
+2. Certifique-se que está no diretório do projeto e execute o seguinte comando:
 ```bash
 make run
 ```

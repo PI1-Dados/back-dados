@@ -2,9 +2,12 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Depends
 from fastapi.concurrency import run_in_threadpool # Importado para rodar código síncrono em thread separada
 from typing import Annotated
 from datetime import datetime
-from api.utils.teste import plot_distancia_acumulada_vs_tempo
+
+from fastapi.responses import StreamingResponse
+from api.utils.formatacao import gerar_csv_dados
+from api.utils.graficos_teste import plot_distancia_acumulada_vs_tempo
 import sqlite3
-import logging
+import logging, traceback
 import api.utils.crud as crud
 import api.schemas.schemas as schemas
 from api.core.database import get_db_connection
@@ -50,6 +53,7 @@ async def criar_novo_experimento_rota(
     arquivoDados: UploadFile = File(..., description="Arquivo CSV com os dados do lançamento/experimento")
 ):
 
+    # Verificação para formatação de data e formato do arquivo enviado
     try:
         data_experimento_obj = datetime.strptime(dataExperimento, "%d/%m/%Y").date()
     except ValueError:
@@ -63,6 +67,7 @@ async def criar_novo_experimento_rota(
             status_code=400,
             detail="Tipo de arquivo inválido para 'arquivoDados'. Envie um arquivo CSV."
         )
+    
     if arquivoDados.content_type not in ["text/csv", "application/vnd.ms-excel", "text/plain", "application/octet-stream"]:
         logger.warning(f"Content-Type do arquivo: {arquivoDados.content_type}. Verifique se é realmente um CSV.")
 
@@ -97,12 +102,15 @@ async def criar_novo_experimento_rota(
         logger.error(f"Erro de banco de dados na rota: {e_db}")
 
         raise HTTPException(status_code=500, detail=f"Erro de banco de dados: {str(e_db)}")
+  
     except ValueError as e_val: 
         logger.error(f"Erro de validação/processamento de dados: {e_val}")
 
         if experimento_id:
              logger.warning(f"Experimento ID {experimento_id} foi criado, mas houve erro ao processar CSV: {e_val}")
+
         raise HTTPException(status_code=400, detail=str(e_val))
+
     except Exception as e_geral:
         logger.error(f"Erro geral inesperado na rota: {e_geral}")
         
@@ -117,7 +125,6 @@ async def criar_novo_experimento_rota(
         "registros_csv_processados": registros_csv_salvos
     }
 
-
 # Tá retornando 200 mas tá retornando com erro (???)
 @router.put("/{id_experimento}", summary="Atualiza (substitui) um experimento")
 async def atualizar_experimento_completo_rota(
@@ -130,14 +137,12 @@ async def atualizar_experimento_completo_rota(
     volumeAgua: float = Form(..., description="Quantidade de ml de água"),
     massaTotalFoguete: float = Form(..., description="Peso do foguete em gramas")
 ):
-    # 1. Verifica se o experimento a ser atualizado existe
     experimento_existente = await run_in_threadpool(crud.select_experimento_completo, db, id_experimento)
     if not experimento_existente:
         raise HTTPException(status_code=404, detail=f"Experimento com id {id_experimento} não encontrado.")
 
     # Bloco principal try/except para erros de banco de dados ou inesperados
     try:
-        # 2. Converte a data
         try:
             data_obj = datetime.strptime(dataExperimento, "%d/%m/%Y").date()
         except ValueError:
@@ -146,8 +151,6 @@ async def atualizar_experimento_completo_rota(
                 detail="Formato de data inválido para 'dataExperimento'. Use dd/mm/yyyy."
             )
 
-        # 3. Prepara a tupla de dados para a função CRUD
-        # Aqui, criamos um schema Pydantic para manter a consistência, embora os dados venham do Form
         dados_experimento_schema = schemas.ExperimentoCreate(
             nomeExperimento=nomeExperimento,
             distanciaAlvo=distanciaAlvo,
@@ -166,29 +169,58 @@ async def atualizar_experimento_completo_rota(
             dados_experimento_schema.massaTotalFoguete,
         ]
 
-        # 4. Chama a função CRUD para atualizar o experimento
         await run_in_threadpool(crud.update_experimento, db, id_experimento, dados_para_db)
 
     except sqlite3.Error as e_db:
         logger.error(f"Erro de banco de dados na rota PUT: {e_db}")
+        
         raise HTTPException(status_code=500, detail=f"Erro de banco de dados: {str(e_db)}")
+    
     except Exception as e_geral:
         logger.error(f"Erro geral inesperado na rota PUT: {e_geral}")
+       
         raise HTTPException(status_code=500, detail=f"Erro inesperado no servidor: {str(e_geral)}")
 
-    # 5. Retorna a resposta de sucesso com os dados atualizados
-    experimento_atualizado = await run_in_threadpool(crud.select_experimento_completo, db, id_experimento)
-
     return {
-        "mensagem": "Experimento atualizado com sucesso!",
-        "experimento": experimento_atualizado["experimento"]
-    }
+        "mensagem": f"Experimento com ID {id_experimento} atualizado com sucesso!"
+        }
+    
 @router.delete("/{id_experimento}")
 async def deleta_experimento(db:DbDependency, id_experimento):
     exp = await run_in_threadpool(crud.delete_experimento, db, id_experimento)
+    if not exp:
+        raise HTTPException(status_code=404, detail=f"Experimento com {id_experimento} não encontrado")
     
-    return exp
+    return {
+        "mensagem": f"Experimento com ID {id_experimento} deletado com sucesso!"
+        }
 
+@router.get("/download-csv/{id_experimento}")
+async def faz_download_csv_experimento(db: DbDependency, id_experimento):
+    try:
+        exp = await run_in_threadpool(crud.select_experimento_completo, db, id_experimento)
+
+        if not exp:
+            raise HTTPException(status_code=404, detail="Item não encontrado apra gerar CSV")
+
+        saida_csv = gerar_csv_dados(exp['dados_associados'])
+        
+        return StreamingResponse(
+            saida_csv,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={exp['experimento']['nome']}.csv"
+            }
+        )    
+        
+    except Exception as e:
+        print(traceback.print_exc())
+        
+        return {
+            "mensagem": f"Erro na geração do CSV!",
+            "erro" : traceback.print_exc()
+        }
+    
 
 @router.get("/gerar-grafico/{id_experimento}")
 async def mostra_grafico(id_experimento):
