@@ -1,34 +1,13 @@
 import sqlite3
-import math
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from api.core.database import DATABASE_URL
+from api.utils.formatacao import haversine
 import dotenv
-
 
 dotenv.load_dotenv()
 
-
-def haversine(lat1, lon1, lat2, lon2):
-    """
-    Calcula a distância em metros entre dois pontos geográficos (latitude, longitude)
-    usando a fórmula de Haversine.
-    """
-    R = 6371000  # Raio da Terra em metros
-
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-
-    a = math.sin(delta_phi / 2.0)**2 + \
-        math.cos(phi1) * math.cos(phi2) * \
-        math.sin(delta_lambda / 2.0)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    distance = R * c
-    return distance
 
 def get_dados_experimento(experimento_id: int):
     """
@@ -216,21 +195,3 @@ def plot_aceleracao_vs_tempo(experimento_id: int, dados, nome_experimento: str):
     nome_arquivo = f"aceleracao_vs_tempo_exp_{experimento_id}.png"
     plt.savefig(nome_arquivo)
     print(f"Gráfico de aceleração salvo como '{nome_arquivo}'")
-
-# if __name__ == "__main__":
-#     # Exemplo de como usar:
-#     # Primeiro, certifique-se de que a tabela EXPERIMENTO tem algum ID.
-#     # Você pode descobrir um ID de experimento válido consultando seu DB.
-#     id_do_experimento_para_plotar = 1 # Substitua pelo ID do experimento desejado
-    
-#     # Opcional: buscar nome do experimento para o título do gráfico
-#     # conn_main = sqlite3.connect(DATABASE_URL)
-#     # cursor_main = conn_main.cursor()
-#     # cursor_main.execute("SELECT nome FROM EXPERIMENTO WHERE id = ?", (id_do_experimento_para_plotar,))
-#     # res = cursor_main.fetchone()
-#     # nome_exp = f"Experimento {id_do_experimento_para_plotar}" if not res else res[0]
-#     # conn_main.close()
-
-#     # plot_distancia_acumulada_vs_tempo(id_do_experimento_para_plotar, nome_exp)
-#     plot_distancia_acumulada_vs_tempo(id_do_experimento_para_plotar, f"Experimento {id_do_experimento_para_plotar}")
-
