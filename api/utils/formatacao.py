@@ -1,4 +1,5 @@
 import math, io, csv
+from datetime import datetime
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -25,7 +26,7 @@ def formata_dados_experimento_especifico(dados_experimento : list):
     dados_registros = []
     distancia_acumulada = 0.0
     altura_inicial = 0.0
-    # datetime_inicial = datetime.strptime(dict(dados_experimento[0])['timestamp'], '%Y-%m-%d %H:%M:%S')
+    datetime_inicial = datetime.strptime(dict(dados_experimento[0])['timestamp'], '%Y-%m-%d %H:%M:%S')
     
     for i in range(0, len(dados_experimento)):
         dict_dados = dict(dados_experimento[i])
@@ -38,8 +39,8 @@ def formata_dados_experimento_especifico(dados_experimento : list):
         else:
             dict_ant = dict(dados_experimento[i-1])
             
-            # tempo_atual_datetime = datetime.strptime(dict_dados['timestamp'], '%Y-%m-%d %H:%M:%S')
-            # segundos_atual = (tempo_atual_datetime - datetime_inicial).total_seconds()
+            tempo_atual_datetime = datetime.strptime(dict_dados['timestamp'], '%Y-%m-%d %H:%M:%S')
+            segundos_atual = (tempo_atual_datetime - datetime_inicial).total_seconds()
             
             distancia_calculada = haversine(dict_ant['latitude'],
                                             dict_ant['longitude'],
@@ -52,7 +53,7 @@ def formata_dados_experimento_especifico(dados_experimento : list):
             
             dict_dados['distancia'] = round(distancia_acumulada,2)
             dict_dados['altura_lancamento'] = round(dict_dados['altura'] - altura_inicial,2)
-            # dict_dados['timestamp'] = segundos_atual
+            dict_dados['timestamp'] = segundos_atual
         
         dados_registros.append(dict_dados)
 

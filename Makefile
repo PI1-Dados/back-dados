@@ -5,6 +5,7 @@ VENV = .venv
 DB_DIR = db
 DB_FILE = $(DB_DIR)/experimentos.db
 ENV_FILE = .env
+PYTEST = pytest
 
 # Detecção de SO
 ifeq ($(OS),Windows_NT)
@@ -76,3 +77,6 @@ help:
 	@echo "  make install - Instala dependências"
 	@echo "  make setup   - Configura ambiente"
 	@echo "  make clean   - Limpa o ambiente"
+
+test:
+	$(PYTEST)
