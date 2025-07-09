@@ -85,7 +85,9 @@ def select_todos_experimentos(db: sqlite3.Connection) -> Optional[Dict[str, Any]
     cursor.execute(sql)
     dados_rows = cursor.fetchall() # Pega todas as linhas correspondentes
     
-    lista_experimentos = [dict(row) for row in dados_rows]
+    lista_experimentos = [formata_nome_colunas_experimento(dict(row)) for row in dados_rows]
+        
+    print(lista_experimentos[0])
     
     return {
                 "experimentos": lista_experimentos,
