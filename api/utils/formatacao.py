@@ -59,7 +59,26 @@ def formata_dados_experimento_especifico(dados_experimento : list):
 
     
     return dados_registros
+
+def formata_nome_colunas_experimento(experimento : dict):
+    mapeamento_chaves = {
+    "id":"id",
+    "nome": "nomeExperimento",
+    "distancia_alvo": "distanciaAlvo",
+    "data": "dataExperimento",
+    "pressao_psi": "pressaoBar",
+    "volume_agua": "volumeAgua",
+    "massa_total_foguete": "massaTotalFoguete"
+    }
+
+    # Renomeando as chaves
+    novo_dict = {
+        novo_nome: experimento[antigo_nome]
+        for antigo_nome, novo_nome in mapeamento_chaves.items()
+    }
     
+    return novo_dict
+ 
 def gerar_csv_dados(dados : list):
     if not dados:
         return ""

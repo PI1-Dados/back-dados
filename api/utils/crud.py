@@ -5,7 +5,7 @@ import pandas as pd
 import io
 import logging
 import api.schemas.schemas as schemas
-from api.utils.formatacao import formata_dados_experimento_especifico
+from api.utils.formatacao import formata_dados_experimento_especifico, formata_nome_colunas_experimento
 
 
 logger = logging.getLogger(__name__)
@@ -125,9 +125,10 @@ def select_experimento_completo(db: sqlite3.Connection, id_experimento: int) -> 
         
         logger.info(f"Experimento ID {experimento['id']} com {len(dados_experimento)} registros de dados.")
         
+        
         # Monta o resultado final
         resultado_completo = {
-            "experimento": experimento,
+            "experimento": formata_nome_colunas_experimento(experimento),
             "dados_associados": formata_dados_experimento_especifico(dados_experimento)
         }
         
