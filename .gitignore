@@ -1,0 +1,6 @@
+.venv
+.env
+csvs_teste/*
+*/__pycache__
+__pycache__
+db/experimentos_teste.db
