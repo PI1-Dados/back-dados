@@ -125,7 +125,6 @@ async def criar_novo_experimento_rota(
         "registros_csv_processados": registros_csv_salvos
     }
 
-# Tá retornando 200 mas tá retornando com erro (???)
 @router.put("/{id_experimento}", summary="Atualiza (substitui) um experimento")
 async def atualizar_experimento_completo_rota(
     id_experimento: int,

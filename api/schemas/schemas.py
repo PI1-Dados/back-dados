@@ -49,7 +49,6 @@ class DadosCSV(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     altitude: Optional[float] = None
-    # Outros campos do CSV podem ser adicionados aqui se necessário para validação
     timestamp: Optional[str] = None
     speed_kmph: Optional[float] = None
     # satellites: Optional[int] = None

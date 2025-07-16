@@ -13,7 +13,6 @@ def get_db_connection():
         logger.info(f"Conectando ao banco de dados: {DATABASE_URL}")
         conn = sqlite3.connect(DATABASE_URL) 
 
-        # conn.close()
     else:
         logger.error("A variável de ambiente DATABASE_SQLITE não foi definida.")
 
